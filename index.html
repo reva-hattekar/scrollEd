@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+        <html lang="en">
+        <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+        <title>ScrollEd - Home</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+        <!-- PDF.js Library -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
+        <script>
+                // Required for PDF.js to work
+                pdfjsLib.GlobalWorkerOptions.workerSrc = https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.worker.min.js;
+        </script>
+        <style>
+                html, body {
+                font-family: 'Inter', sans-serif;
+                overscroll-behavior: contain; /* Prevents background scroll on mobile */
+                overflow-x: hidden; /* Disables horizontal scrolling */
+                }
+                body.home-background {
+                background-image: linear-gradient(rgba(17, 24, 39, 0.95), rgba(17, 24, 39, 0.95)), url('https://images.unsplash.com/photo-1481627834876-b7833e8f5570?q=80&w=1887&auto=format&fit=crop');
+                background-size: cover;
+                background-position: center;
+                background-attachment: fixed;
+                }
+                /* Hide scrollbar for Chrome, Safari and Opera */
+                ::-webkit-scrollbar {
+                display: none;
+                }
+
+                /* Hide scrollbar for IE, Edge and Firefox */
+                body, #home-view, #review-content-wrapper, #history-list, #quiz-active-view, #quiz-results-view, #leaderboard-list, #profile-friends-list, #quiz-breakdown-view {
+                -ms-overflow-style: none;  /* IE and Edge */
+                scrollbar-width: none;  /* Firefox */
+                }
+                .spinner {
+                border: 4px solid rgba(255, 255, 255, 0.3);
+                border-radius: 50%;
+                border-top: 4px solid #3b82f6;
+                width: 40px;
+                height: 40px;
+                animation: spin 1s linear infinite;
+                }
+                @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+                /* --- Flashcard Styles --- */
+                #flashcard-container {
+                position: relative;
+                width: 100%;
+                height: 400px; /* Fixed height for the card area */
+                perspective: 1000px;
+                }
+                .flashcard {
+                position: absolute;
+                width: 100%;
+                height: 100%;
+                background-color: #374151; /* bg-gray-700 */
+                border-radius: 1.5rem; /* rounded-3xl */
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                padding: 1.5rem;
+                text-align: center;
+                user-select: none;
+                touch-action: none; /* Important for pointer events */
+                transition: transform 0.3s ease, opacity 0.3s ease;
+                box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+                border: 1px solid #4b5563;
+                pointer-events: none; /* Make cards non-interactive by default */
+                }
+                .flashcard.top-card {
+                pointer-events: auto; /* Make ONLY the top card interactive */
+                cursor: grab;
+                }
+                .flashcard.dragging {
+                cursor: grabbing;
+                transition: none; /* No transition while actively dragging */
+                }
+                .flashcard h3 {
+                font-size: 1.5rem; /* Default font size */
+                font-weight: bold;
+                color: #d1d5db; /* text-gray-300 */
+                }
+                
+                /* --- Quiz Reel Styles --- */
+                #quiz-active-view-wrapper {
+                display: flex;
+                flex-direction: column;
+                flex: 1;
+                overflow: hidden;
+                }
+                #quiz-active-view {
+                scroll-snap-type: y mandatory;
+                flex: 1;
+                overflow-y: auto;
+                min-height: 0; /* FIX: Prevents flex item from overflowing its container */
+                }
+                .quiz-question-slide {
+                scroll-snap-align: center;
+                display: flex;
+                align-items: top;
+                justify-content: center;
+                flex-shrink: 0;
+                width: 100%;
+                height: 100%; /* Each slide takes full height of the container */
+                padding: 1rem;
+                }
+                .quiz-question-card {
+                width: 100%;
+                max-width: 95%;
+                padding: 1.5rem;
+                background-color: #1f2937;
+                border-radius: 1.5rem;
+                box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+                }
+
+                .quiz-option.selected-option {
+                background-color: #3b82f6; /* bg-blue-600 */
+                border-color: #60a5fa; /* border-blue-400 */
+                }
+                .time-btn.selected {
+                background-color: #3b82f6; /* bg-blue-600 */
+                font-weight: bold;
+                }
+
+
+                /* --- Custom Toggle Switch --- */
+                .toggle-switch {
+                position: relative;
+                display: inline-block;
+                width: 120px;
+                height: 34px;
+                }
+                .toggle-switch input {
+                opacity: 0;
+                width: 0;
+                height: 0;
+                }
+                .slider {
+                position: absolute;
+                cursor: pointer;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: #374151; /* bg-gray-700 */
+                transition: .4s;
+                border-radius: 34px;
+                }
+                .slider:before {
+                position: absolute;
+                content: "";
+                height: 26px;
+                width: 55px;
+                left: 4px;
+                bottom: 4px;
+                background-color: #3b82f6; /* bg-blue-600 */
+                transition: .4s;
+                border-radius: 34px;
+                z-index: 1;
+                }
+                input:checked + .slider {
+                background-color: #374151;
+                }
+                input:checked + .slider:before {
+                transform: translateX(55px);
+                }
+                .slider-text {
+                position: absolute;
+                width: 100%;
+                height: 100%;
+                display: flex;
+                justify-content: space-around;
+                align-items: center;
+                font-size: 12px;
+                font-weight: bold;
+                color: white;
+                z-index: 0;
+                pointer-events: none;
+                }
+                .slider-text .icon {
+                width: 18px;
+                height: 18px;
+                stroke-width: 2;
+                transition: color 0.4s ease;
+                color: #9ca3af; /* gray-400 */
+                }
+                .slider-text .icon.active {
+                color: white;
+                }
+
+                /* --- Profile Tabs --- */
+                .profile-tab.active {
+                border-color: #3b82f6;
+                color: #60a5fa;
+                }
+
+                /* Ensure content doesn't hide behind the fixed navbar */
+                #home-view, #review-view, #history-view, #quiz-view, #flashcard-view, #app-wrapper, #leaderboard-view, #profile-view, #quiz-breakdown-view {
+                padding-bottom: 4.5rem; /* 72px */
+                }
+        </style>
+        </head>
+        <body class="bg-gray-900 text-white min-h-screen">
+
+        <!-- App Container -->
+        <div class="w-full max-w-xl mx-auto flex flex-col h-screen">
+                
+                <!-- View 0: Loading View -->
+                <div id="loading-view" class="flex flex-col justify-center items-center flex-1 p-4">
+                <div class="spinner"></div>
+                <p id="loading-text" class="mt-4 text-gray-400">Initializing...</p>
+                </div>
+
+                <div id="app-wrapper" class="hidden h-full flex flex-col p-4">
+                <!-- View 1: Home Page -->
+                <div id="home-view" class="hidden flex-col flex-1 overflow-y-auto">
+                        <header class="relative mb-6 text-center pt-4">
+                        <h1 class="text-5xl md:text-6xl font-extrabold" style="background: linear-gradient(to right, #3b82f6, #16a34a); -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-fill-color: transparent;">ScrollEd</h1>
+                        <div class="absolute top-2 right-0 flex items-center space-x-2">
+                                <!-- Streak Counter -->
+                                <div id="streak-container" class="w-20 h-20 bg-gray-800 border border-gray-700 rounded-full flex flex-col items-center justify-center text-center p-1">
+                                <svg class="w-6 h-6 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.657 7.343A8 8 0 0117.657 18.657z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.879 16.121A3 3 0 1014.12 11.88l-4.242 4.242z"></path></svg>
+                                <p class="font-bold text-lg leading-tight"><span id="streak-count">0</span></p>
+                                <p class="text-xs text-gray-400 leading-tight -mt-1">Days</p>
+                                </div>
+                        </div>
+                        </header>
+                        <main class="space-y-6 mt-10">
+                        <div class="bg-gray-800/80 backdrop-blur-sm border border-gray-700 rounded-2xl p-6">
+                                <form id="topic-form">
+                                <label for="topic-input" class="text-2xl font-bold text-gray-100 block text-center mb-4">Enter a Topic</label>
+                                <input type="text" id="topic-input" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Topic Name" required>
+                                <div id="topic-card-count-wrapper" class="hidden mt-4">
+                                        <label for="card-count-input" class="text-sm font-medium text-gray-300 block text-left mb-2">Number of Cards:</label>
+                                        <input type="number" id="card-count-input" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" value="5" min="5" max="30" required>
+                                </div>
+                                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg mt-4 transition duration-300 h-12">Generate Notes</button>
+                                </form>
+                        </div>
+                        <div class="text-white font-semibold text-center py-1 px-3 rounded-full bg-gray-800/50 backdrop-blur-sm self-center w-min mx-auto">OR</div>
+                        <div id="upload-section" class="bg-gray-800/80 backdrop-blur-sm border border-gray-700 rounded-2xl p-6 text-center">
+                                <label for="file-upload" class="cursor-pointer">
+                                <h2 class="text-2xl font-bold text-gray-100">Upload Document</h2>
+                                <p class="text-gray-400 mt-1">Learn from your PDF files.</p>
+                                <input id="file-upload" type="file" class="hidden" accept=".pdf">
+                                </label>
+                                <div id="upload-card-count-wrapper" class="hidden mt-4">
+                                <label for="card-count-upload-input" class="text-sm font-medium text-gray-300 block text-left mb-2">Number of Cards:</label>
+                                <input type="number" id="card-count-upload-input" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" value="5" min="5" max="30" required>
+                                <button id="upload-submit-btn" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg mt-4 transition duration-300 h-12">Generate from PDF</button>
+                                </div>
+                                <div id="upload-spinner" class="hidden spinner mx-auto mt-4" style="width: 24px; height: 24px; border-width: 2px;"></div>
+                        </div>
+                        </main>
+                </div>
+
+                <!-- View 2: Flashcard View (Initially Hidden) -->
+                <div id="flashcard-view" class="hidden flex-1 flex-col">
+                        <header class="flex items-center justify-between mb-4">
+                        <button id="back-btn" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition">&larr; Home</button>
+                        <h2 id="flashcard-topic-title" class="text-xl font-bold text-blue-400 text-right truncate"></h2>
+                        </header>
+                        <main id="flashcard-content" class="flex-1 flex flex-col justify-center items-center">
+                        <!-- Loading or cards go here -->
+                        </main>
+                </div>
+                
+                <!-- View 3: Review View (Initially Hidden) -->
+                <div id="review-view" class="hidden flex-1 flex-col">
+                        <header class="flex items-center justify-between mb-4">
+                        <button id="review-back-btn" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition">&larr; Home</button>
+                        <h2 class="text-2xl font-bold text-green-400">Review Session</h2>
+                        </header>
+                        <main id="review-content-wrapper" class="flex-1 bg-gray-800 border border-gray-700 rounded-2xl p-6 overflow-y-auto">
+                        <div id="review-content" class="space-y-6"></div>
+                        <div id="continue-learning-prompt" class="mt-8 pt-6 border-t border-gray-700 text-center"></div>
+                        </main>
+                </div>
+
+                <!-- View 4: History View (Initially Hidden) -->
+                <div id="history-view" class="hidden flex-1 flex-col">
+                        <header class="flex items-center justify-between mb-4">
+                        <button id="history-back-btn" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition">&larr; Home</button>
+                        <h2 class="text-2xl font-bold text-green-400">Learning History</h2>
+                        </header>
+                        <main id="history-list" class="flex-1 bg-gray-800 border border-gray-700 rounded-2xl p-2 space-y-2 overflow-y-auto">
+                        <!-- History items will be injected here -->
+                        </main>
+                </div>
+
+                <!-- View 5: Quiz View (Initially Hidden) -->
+                <div id="quiz-view" class="hidden flex-1 flex-col">
+                        <header class="flex items-center justify-between mb-4">
+                        <button id="quiz-back-btn" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition">&larr; Home</button>
+                        <h2 class="text-2xl font-bold text-purple-400">Quiz Time!</h2>
+                        </header>
+                        <main id="quiz-container" class="flex-1 flex flex-col bg-gray-800 border border-gray-700 rounded-2xl overflow-hidden">
+                        
+                        <!-- New Quiz Start View -->
+                        <div id="quiz-start-view" class="p-6 space-y-6 overflow-y-auto">
+                                <div class="bg-gray-800 border border-gray-700 rounded-2xl p-6">
+                                <form id="quiz-topic-form">
+                                        <label for="quiz-topic-input" class="text-2xl font-bold text-gray-100 block text-center mb-4">Enter a Topic</label>
+                                        <input type="text" id="quiz-topic-input" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., 'The Roman Empire'" required>
+                                        <button type="submit" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-lg mt-4 transition duration-300 h-12">Create Quiz Room</button>
+                                </form>
+                                </div>
+                                <div class="text-gray-500 font-semibold text-center">OR</div>
+                                <div id="quiz-upload-section" class="bg-gray-800 border border-gray-700 rounded-2xl p-6 text-center">
+                                <label for="quiz-file-upload" class="cursor-pointer">
+                                        <h2 class="text-2xl font-bold text-gray-100">Upload Document</h2>
+                                        <p class="text-gray-400 mt-1">Generate a quiz from your PDF files.</p>
+                                        <input id="quiz-file-upload" type="file" class="hidden" accept=".pdf">
+                                </label>
+                                <div id="quiz-upload-feedback" class="mt-4"></div>
+                                </div>
+                                <div class="text-gray-500 font-semibold text-center">OR</div>
+                                <div class="bg-gray-800 border border-gray-700 rounded-2xl p-6">
+                                <form id="join-room-form">
+                                        <label for="room-code-input" class="text-2xl font-bold text-gray-100 block text-center mb-4">Join a Room</label>
+                                        <input type="text" id="room-code-input" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter Room Code" required>
+                                        <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg mt-4 transition duration-300 h-12">Join Quiz</button>
+                                </form>
+                                </div>
+                        </div>
+                        
+                        <div id="quiz-content-wrapper" class="flex-1 flex flex-col hidden">
