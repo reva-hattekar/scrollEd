@@ -362,7 +362,22 @@
                         
                         <!-- Quiz Start View -->
                         <div id="quiz-start-view" class="p-6 space-y-6 overflow-y-auto">
-                                <p class="text-center text-gray-400">Quizzes can be generated after completing a flashcard session or from one of your saved notes.</p>
+                            <div class="bg-gray-800 border border-gray-700 rounded-2xl p-6">
+                                <form id="quiz-topic-form">
+                                    <label for="quiz-topic-input" class="text-2xl font-bold text-gray-100 block text-center mb-4">Enter a Topic</label>
+                                    <input type="text" id="quiz-topic-input" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="e.g., 'The Roman Empire'" required>
+                                    <button type="submit" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-lg mt-4 transition duration-300 h-12">Create Quiz</button>
+                                </form>
+                            </div>
+                            <div class="text-gray-500 font-semibold text-center">OR</div>
+                            <div id="quiz-upload-section" class="bg-gray-800 border border-gray-700 rounded-2xl p-6 text-center">
+                                <label for="quiz-file-upload" class="cursor-pointer">
+                                    <h2 class="text-2xl font-bold text-gray-100">Upload Document</h2>
+                                    <p class="text-gray-400 mt-1">Generate a quiz from your PDF files.</p>
+                                    <input id="quiz-file-upload" type="file" class="hidden" accept=".pdf">
+                                </label>
+                                <div id="quiz-upload-feedback" class="mt-4"></div>
+                            </div>
                         </div>
                         
                         <div id="quiz-content-wrapper" class="flex-1 flex flex-col hidden">
