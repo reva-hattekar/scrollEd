@@ -362,7 +362,7 @@
                         
                         <!-- Quiz Start View -->
                         <div id="quiz-start-view" class="p-6 space-y-6 overflow-y-auto">
-                            <div class="bg-gray-800 border border-gray-700 rounded-2xl p-6">
+                               <div class="bg-gray-800 border border-gray-700 rounded-2xl p-6">
                                 <form id="quiz-topic-form">
                                     <label for="quiz-topic-input" class="text-2xl font-bold text-gray-100 block text-center mb-4">Enter a Topic</label>
                                     <input type="text" id="quiz-topic-input" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="e.g., 'The Roman Empire'" required>
@@ -680,6 +680,10 @@
                     // --- Quiz View Elements (Re-added) ---
                     const quizBackBtn = document.getElementById('quiz-back-btn');
                     const quizContainer = document.getElementById('quiz-container');
+                    const quizTopicForm = document.getElementById('quiz-topic-form');
+                    const quizTopicInput = document.getElementById('quiz-topic-input');
+                    const quizFileUpload = document.getElementById('quiz-file-upload');
+                    const quizUploadFeedback = document.getElementById('quiz-upload-feedback');
                     const quizContentWrapper = document.getElementById('quiz-content-wrapper');
                     const quizStartView = document.getElementById('quiz-start-view');
                     const quizConfigView = document.getElementById('quiz-config-view');
@@ -815,6 +819,8 @@
                     // --- QUIZ LISTENERS ---
                     quizBackBtn.addEventListener('click', goHome);
                     breakdownBackBtn.addEventListener('click', goHome);
+                    quizTopicForm.addEventListener('submit', handleQuizTopicSubmit);
+                    quizFileUpload.addEventListener('change', handleQuizFileSubmit);
                     toggleIconNumber.classList.add('active');
                     quizModeToggle.addEventListener('change', () => {
                     quizNumberMode.classList.toggle('hidden');
@@ -1847,6 +1853,45 @@
                         showScreen(quizView);
                         quizContentWrapper.classList.add('hidden');
                         quizStartView.classList.remove('hidden');
+                    }
+                    
+                    async function handleQuizTopicSubmit(e) {
+                        e.preventDefault();
+                        const topic = quizTopicInput.value.trim();
+                        if (!topic) return;
+                        
+                        const btn = e.currentTarget.querySelector('button');
+                        btn.disabled = true;
+                        btn.innerHTML = `<div class="spinner mx-auto" style="width: 24px; height: 24px; border-width: 2px;"></div>`;
+
+                        try {
+                            const points = await fetchFlashcardsFromAI(topic, 15, 1, []);
+                            showQuizConfigScreen(points.map(p => p.point));
+                        } catch (error) {
+                            console.error("Error generating quiz from topic:", error);
+                        } finally {
+                             btn.disabled = false;
+                             btn.textContent = 'Create Quiz';
+                        }
+                    }
+
+                    async function handleQuizFileSubmit(e) {
+                        const file = e.target.files[0];
+                        if (!file) return;
+
+                        quizUploadFeedback.innerHTML = `<div class="spinner mx-auto mt-4" style="width: 24px; height: 24px; border-width: 2px;"></div>`;
+
+                        try {
+                            const text = await extractTextFromPdf(file);
+                            const topic = await getTopicFromDocument(text);
+                            const points = await fetchFlashcardsFromAI(topic, 15, 1, [], text);
+                            showQuizConfigScreen(points.map(p => p.point));
+                        } catch (error) {
+                            console.error("Error generating quiz from PDF:", error);
+                            quizUploadFeedback.innerHTML = `<p class="text-red-400 mt-2">Could not process PDF.</p>`;
+                        } finally {
+                            quizFileUpload.value = ''; // Reset file input
+                        }
                     }
                     
                     function showQuizConfigScreen(points) {
